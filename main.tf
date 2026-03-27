@@ -33,6 +33,7 @@ resource "scaleway_vpc_private_network" "private" {
   region   = local.region
   tags     = var.tags
 
+  enable_default_route_propagation = true
   ipv4_subnet {
     subnet = cidrsubnet(local.network_cidr_v4, 8, 1 + (var.network_shift + each.value) * 4)
   }
