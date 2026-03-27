@@ -26,6 +26,22 @@ resource "scaleway_vpc_private_network" "public" {
   }
 }
 
+resource "scaleway_vpc_private_network" "elasticmetal" {
+  for_each = { for idx, name in var.regions : name => idx }
+  vpc_id   = scaleway_vpc.main.id
+  name     = "elasticmetal-${each.key}"
+  region   = local.region
+  tags     = var.tags
+
+  enable_default_route_propagation = true
+  ipv4_subnet {
+    subnet = cidrsubnet(local.network_cidr_v4, 8, 2 + (var.network_shift + each.value) * 4)
+  }
+  ipv6_subnets {
+    subnet = cidrsubnet(local.network_cidr_v6, 8, 2 + 4 * (var.network_shift + each.value))
+  }
+}
+
 resource "scaleway_vpc_private_network" "private" {
   for_each = { for idx, name in var.regions : name => idx }
   vpc_id   = scaleway_vpc.main.id
