@@ -1,7 +1,9 @@
 
 resource "scaleway_instance_security_group" "common" {
-  for_each                = { for idx, name in var.regions : name => idx }
-  name                    = "common"
+  for_each = { for idx, name in var.regions : name => idx }
+  name     = "common"
+  zone     = each.key
+
   inbound_default_policy  = "drop"
   outbound_default_policy = "accept"
 
@@ -120,8 +122,10 @@ resource "scaleway_instance_security_group" "controlplane" {
 }
 
 resource "scaleway_instance_security_group" "web" {
-  for_each                = { for idx, name in var.regions : name => idx }
-  name                    = "web"
+  for_each = { for idx, name in var.regions : name => idx }
+  name     = "web"
+  zone     = each.key
+
   inbound_default_policy  = "drop"
   outbound_default_policy = "accept"
 
