@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/sergelogvinov/terraform-scaleway-network/compare/v0.1.0...v0.2.0) (2026-03-27)
+
+
+### Features
+
+* add elastic-metal network ([c9aa638](https://github.com/sergelogvinov/terraform-scaleway-network/commit/c9aa638933c61de94b2077393b79d33f0fc171b9))
+
 ## [0.1.0](https://github.com/sergelogvinov/terraform-scaleway-network/compare/v0.0.1...v0.1.0) (2026-03-27)
 
 
