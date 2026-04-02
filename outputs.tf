@@ -38,11 +38,22 @@ output "network_private" {
 output "network_baremetal" {
   description = "The baremetal network"
   value = { for idx, zone in var.regions : zone => {
+    vpc_id     = scaleway_vpc.main.id
+    network_id = scaleway_vpc.main.id
+    subnet_id  = scaleway_vpc_private_network.elasticmetal[zone].id
     cidr_v4    = cidrsubnet(local.network_cidr_v4, 8, 2 + (var.network_shift + idx) * 4)
     cidr_v6    = cidrsubnet(local.network_cidr_v6, 8, 2 + 4 * (var.network_shift + idx))
     gateway_v4 = cidrhost(cidrsubnet(local.network_cidr_v4, 8, 2 + (var.network_shift + idx) * 4), 1)
     gateway_v6 = cidrhost(cidrsubnet(local.network_cidr_v6, 8, 2 + 4 * (var.network_shift + idx)), 1)
     mtu        = 1500
+  } }
+}
+
+output "networks" {
+  description = "Regional networks"
+  value = { for idx, zone in var.regions : zone => {
+    cidr_v4 = cidrsubnet(local.network_cidr_v4, 6, (var.network_shift + idx))
+    cidr_v6 = cidrsubnet(local.network_cidr_v6, 6, (var.network_shift + idx))
   } }
 }
 

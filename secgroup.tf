@@ -12,6 +12,11 @@ resource "scaleway_instance_security_group" "common" {
     protocol = "ANY"
     ip_range = local.network_cidr_v4
   }
+  inbound_rule {
+    action   = "accept"
+    protocol = "ANY"
+    ip_range = local.network_cidr_v6
+  }
 
   dynamic "inbound_rule" {
     for_each = var.allowlist_admins
@@ -62,6 +67,11 @@ resource "scaleway_instance_security_group" "controlplane" {
     action   = "accept"
     protocol = "ANY"
     ip_range = local.network_cidr_v4
+  }
+  inbound_rule {
+    action   = "accept"
+    protocol = "ANY"
+    ip_range = local.network_cidr_v6
   }
   inbound_rule {
     action   = "accept"
@@ -154,6 +164,11 @@ resource "scaleway_instance_security_group" "web" {
     action   = "accept"
     protocol = "ANY"
     ip_range = local.network_cidr_v4
+  }
+  inbound_rule {
+    action   = "accept"
+    protocol = "ANY"
+    ip_range = local.network_cidr_v6
   }
 
   # KubeSpan
