@@ -3,6 +3,9 @@ locals {
   network_cidr_v4 = try(one([for ip in var.network_cidr : ip if length(split(".", ip)) > 1]), "")
   network_cidr_v6 = try(one([for ip in var.network_cidr : ip if length(split(":", ip)) > 1]), "")
 
+  network_subnet_v4 = { for idx, zone in var.regions : zone => cidrsubnet(local.network_cidr_v4, 6, (var.network_shift + idx)) }
+  network_subnet_v6 = { for idx, zone in var.regions : zone => cidrsubnet(local.network_cidr_v6, 6, (var.network_shift + idx)) }
+
   region = var.network_region == "" ? substr(var.regions[0], 0, 6) : var.network_region
 }
 

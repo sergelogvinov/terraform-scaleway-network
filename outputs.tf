@@ -52,8 +52,8 @@ output "network_baremetal" {
 output "networks" {
   description = "Regional networks"
   value = { for idx, zone in var.regions : zone => {
-    cidr_v4 = cidrsubnet(local.network_cidr_v4, 6, (var.network_shift + idx))
-    cidr_v6 = cidrsubnet(local.network_cidr_v6, 6, (var.network_shift + idx))
+    cidr_v4 = local.network_subnet_v4[zone]
+    cidr_v6 = local.network_subnet_v6[zone]
   } }
 }
 
@@ -71,4 +71,24 @@ output "network_secgroup" {
     controlplane = scaleway_instance_security_group.controlplane[zone].id
     web          = scaleway_instance_security_group.web[zone].id
   } }
+}
+
+output "network_peering" {
+  value = { for k, v in local.ipsec_tunnels : k => {
+    server = {
+      asn  = v.server_asn
+      ip4  = v.server_v4
+      ip6  = v.server_v6
+      p2p4 = v.server_p2p_v4
+      p2p6 = v.server_p2p_v6 != "" ? scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].private_ip : null
+    }
+    client = {
+      asn  = v.peer_asn
+      ip4  = v.peer_v4
+      ip6  = v.peer_v6
+      p2p4 = v.peer_p2p_v4
+      p2p6 = v.peer_p2p_v6 != "" ? scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].peer_private_ip : null
+    }
+    }
+  }
 }
