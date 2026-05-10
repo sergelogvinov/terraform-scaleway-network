@@ -54,6 +54,7 @@ output "networks" {
   value = { for idx, zone in var.regions : zone => {
     cidr_v4 = local.network_subnet_v4[zone]
     cidr_v6 = local.network_subnet_v6[zone]
+    peer    = compact([try(data.scaleway_ipam_ip.peer_v4[zone].address, null), try(data.scaleway_ipam_ip.peer_v6[zone].address, null)])
   } }
 }
 
@@ -80,14 +81,14 @@ output "network_peering" {
       ip4  = v.server_v4
       ip6  = v.server_v6
       p2p4 = v.server_p2p_v4
-      p2p6 = v.server_p2p_v6 != "" ? scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].private_ip : null
+      p2p6 = v.server_p2p_v6 != "" ? try(scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].private_ip, null) : null
     }
     client = {
       asn  = v.peer_asn
       ip4  = v.peer_v4
       ip6  = v.peer_v6
       p2p4 = v.peer_p2p_v4
-      p2p6 = v.peer_p2p_v6 != "" ? scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].peer_private_ip : null
+      p2p6 = v.peer_p2p_v6 != "" ? try(scaleway_s2s_vpn_connection.peer[k].bgp_session_ipv6[0].peer_private_ip, null) : null
     }
     }
   }

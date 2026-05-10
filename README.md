@@ -27,13 +27,13 @@ module "network" {
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5 |
-| <a name="requirement_scaleway"></a> [scaleway](#requirement\_scaleway) | ~> 2.70.1 |
+| <a name="requirement_scaleway"></a> [scaleway](#requirement\_scaleway) | >= 2.70.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_scaleway"></a> [scaleway](#provider\_scaleway) | ~> 2.70.1 |
+| <a name="provider_scaleway"></a> [scaleway](#provider\_scaleway) | >= 2.70.0 |
 
 ## Modules
 
@@ -46,12 +46,20 @@ No modules.
 | [scaleway_instance_security_group.common](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/instance_security_group) | resource |
 | [scaleway_instance_security_group.controlplane](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/instance_security_group) | resource |
 | [scaleway_instance_security_group.web](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/instance_security_group) | resource |
+| [scaleway_s2s_vpn_connection.peer](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/s2s_vpn_connection) | resource |
+| [scaleway_s2s_vpn_customer_gateway.peer](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/s2s_vpn_customer_gateway) | resource |
+| [scaleway_s2s_vpn_gateway.peer](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/s2s_vpn_gateway) | resource |
+| [scaleway_s2s_vpn_routing_policy.peer_policy_v4](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/s2s_vpn_routing_policy) | resource |
+| [scaleway_s2s_vpn_routing_policy.peer_policy_v6](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/s2s_vpn_routing_policy) | resource |
 | [scaleway_vpc.main](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/vpc) | resource |
 | [scaleway_vpc_gateway_network.main](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/vpc_gateway_network) | resource |
+| [scaleway_vpc_private_network.elasticmetal](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/vpc_private_network) | resource |
 | [scaleway_vpc_private_network.private](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/vpc_private_network) | resource |
 | [scaleway_vpc_private_network.public](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/vpc_private_network) | resource |
 | [scaleway_vpc_public_gateway.main](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/vpc_public_gateway) | resource |
 | [scaleway_vpc_public_gateway_ip.main](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/resources/vpc_public_gateway_ip) | resource |
+| [scaleway_ipam_ip.peer_v4](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/data-sources/ipam_ip) | data source |
+| [scaleway_ipam_ip.peer_v6](https://registry.terraform.io/providers/scaleway/scaleway/latest/docs/data-sources/ipam_ip) | data source |
 
 ## Inputs
 
@@ -59,9 +67,10 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_allowlist_admins"></a> [allowlist\_admins](#input\_allowlist\_admins) | Whitelist for administrators | `list` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_allowlist_datacenters"></a> [allowlist\_datacenters](#input\_allowlist\_datacenters) | Datacenters subnets | `list` | `[]` | no |
-| <a name="input_capabilities"></a> [capabilities](#input\_capabilities) | n/a | `map(any)` | <pre>{<br/>  "fr-par-1": {<br/>    "network_nat_enable": false,<br/>    "network_nat_type": "VPC-GW-S"<br/>  },<br/>  "fr-par-2": {<br/>    "network_nat_enable": false,<br/>    "network_nat_type": "VPC-GW-S"<br/>  }<br/>}</pre> | no |
+| <a name="input_capabilities"></a> [capabilities](#input\_capabilities) | n/a | `map(any)` | <pre>{<br/>  "fr-par-1": {<br/>    "network_nat_enable": false,<br/>    "network_nat_type": "VPC-GW-S",<br/>    "network_peer_enable": false,<br/>    "network_peer_type": "VGW-XXS"<br/>  },<br/>  "fr-par-2": {<br/>    "network_nat_enable": false,<br/>    "network_nat_type": "VPC-GW-S",<br/>    "network_peer_enable": false,<br/>    "network_peer_type": "VGW-XXS"<br/>  }<br/>}</pre> | no |
 | <a name="input_network_cidr"></a> [network\_cidr](#input\_network\_cidr) | Local subnet rfc1918 | `list(string)` | <pre>[<br/>  "172.28.0.0/16",<br/>  "fd60:172:28::/56"<br/>]</pre> | no |
 | <a name="input_network_name"></a> [network\_name](#input\_network\_name) | n/a | `string` | `"main"` | no |
+| <a name="input_network_peering"></a> [network\_peering](#input\_network\_peering) | n/a | `map(any)` | `{}` | no |
 | <a name="input_network_region"></a> [network\_region](#input\_network\_region) | Default region | `string` | `""` | no |
 | <a name="input_network_shift"></a> [network\_shift](#input\_network\_shift) | Network number shift | `number` | `1` | no |
 | <a name="input_regions"></a> [regions](#input\_regions) | The list of the scaleway region name (order is important) | `list(string)` | <pre>[<br/>  "fr-par-1",<br/>  "fr-par-2"<br/>]</pre> | no |
@@ -74,9 +83,11 @@ No modules.
 |------|-------------|
 | <a name="output_network_baremetal"></a> [network\_baremetal](#output\_network\_baremetal) | The baremetal network |
 | <a name="output_network_nat"></a> [network\_nat](#output\_network\_nat) | The nat ips |
+| <a name="output_network_peering"></a> [network\_peering](#output\_network\_peering) | n/a |
 | <a name="output_network_private"></a> [network\_private](#output\_network\_private) | The private network |
 | <a name="output_network_public"></a> [network\_public](#output\_network\_public) | The public network |
 | <a name="output_network_secgroup"></a> [network\_secgroup](#output\_network\_secgroup) | The Network Security Groups |
+| <a name="output_networks"></a> [networks](#output\_networks) | Regional networks |
 | <a name="output_regions"></a> [regions](#output\_regions) | Regions |
 | <a name="output_tags"></a> [tags](#output\_tags) | Common tags |
 <!-- END_TF_DOCS -->

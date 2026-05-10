@@ -36,16 +36,16 @@ variable "network_shift" {
 variable "network_peering" {
   type = map(any)
   default = {
-    "fr-par-1" = {
-      "peer-1" = {
-        ip    = "1.2.3.4"
-        cidrs = ["172.16.0.0/22"]
-        # BGP parameters for the dynamic peering
-        asn      = 12345
-        p2p      = ["169.254.131.96/31", "fd00:169:254:131::/127"]
-        p2p_side = 0
-      }
-    }
+    # "fr-par-1" = {
+    #   "peer-1" = {
+    #     ip    = ["1.2.3.4"]
+    #     cidrs = ["172.16.0.0/22"]
+    #     # BGP parameters for the dynamic peering
+    #     asn      = 12345
+    #     p2p      = ["169.254.131.96/31", "fd00:169:254:131::/127"]
+    #     p2p_side = 0
+    #   }
+    # }
   }
 }
 

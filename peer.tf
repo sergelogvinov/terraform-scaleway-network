@@ -48,36 +48,45 @@ locals {
 
   ipsec_tunnels = { for k in flatten([
     for idx, region in var.regions : [
-      for peer, v in try(var.network_peering[region], {}) : {
-        name : "${peer}-${region}"
-        region   = region
-        p2p_side = v.p2p_side
-        p2p_v4   = local.ipsec_tunnels_p2p["${peer}-${region}"].v4
-        p2p_v6   = local.ipsec_tunnels_p2p["${peer}-${region}"].v6
+      for peer, v in try(var.network_peering[region], {}) : [
+        for i, ip in [v.ip[0]] : {
+          idx     = i
+          peer    = peer
+          name    = "${peer}-${i}-${region}"
+          region  = region
+          subnets = lookup(v, "cidrs", var.network_cidr)
+          pos     = lookup(v, "p2p_side", 0)
 
-        server_v4     = try(data.scaleway_ipam_ip.peer_v4[region].address, "")
-        server_v6     = try(data.scaleway_ipam_ip.peer_v6[region].address, "")
-        server_p2p_v4 = local.ipsec_tunnels_p2p["${peer}-${region}"].v4 != null ? cidrhost(local.ipsec_tunnels_p2p["${peer}-${region}"].v4, v.p2p_side) : ""
-        server_p2p_v6 = local.ipsec_tunnels_p2p["${peer}-${region}"].v6 != null ? cidrhost(local.ipsec_tunnels_p2p["${peer}-${region}"].v6, v.p2p_side) : ""
-        server_asn    = 12876
+          peer_asn    = lookup(v, "asn", 0)
+          peer_v4     = length(split(".", ip)) > 1 ? ip : null
+          peer_v6     = length(split(":", ip)) > 1 ? ip : null
+          peer_p2p_v4 = local.ipsec_tunnels_p2p["${peer}-${region}"].v4 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p["${peer}-${region}"].v4, 3, idx), 4 * i + 2 - lookup(v, "p2p_side", 0)) : ""
+          peer_p2p_v6 = local.ipsec_tunnels_p2p["${peer}-${region}"].v6 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p["${peer}-${region}"].v6, 3, idx), 4 * i + 2 - lookup(v, "p2p_side", 0)) : ""
 
-        peer_v4     = length(split(".", v.ip)) > 1 ? v.ip : null
-        peer_v6     = length(split(":", v.ip)) > 1 ? v.ip : null
-        peer_p2p_v4 = local.ipsec_tunnels_p2p["${peer}-${region}"].v4 != null ? cidrhost(local.ipsec_tunnels_p2p["${peer}-${region}"].v4, 1 - v.p2p_side) : ""
-        peer_p2p_v6 = local.ipsec_tunnels_p2p["${peer}-${region}"].v6 != null ? cidrhost(local.ipsec_tunnels_p2p["${peer}-${region}"].v6, 1 - v.p2p_side) : ""
-        peer_asn    = v.asn
-      }
+          server_asn    = 12876
+          server_v4     = try(data.scaleway_ipam_ip.peer_v4[region].address, "")
+          server_v6     = try(data.scaleway_ipam_ip.peer_v6[region].address, "")
+          server_p2p_v4 = local.ipsec_tunnels_p2p["${peer}-${region}"].v4 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p["${peer}-${region}"].v4, 3, idx), 4 * i + 1 + lookup(v, "p2p_side", 0)) : ""
+          server_p2p_v6 = local.ipsec_tunnels_p2p["${peer}-${region}"].v6 != null ? cidrhost(cidrsubnet(local.ipsec_tunnels_p2p["${peer}-${region}"].v6, 3, idx), 4 * i + 1 + lookup(v, "p2p_side", 0)) : ""
+        }
+      ]
     ] if try(var.capabilities[region].network_peer_enable, false)
   ]) : k.name => k }
 }
 
+# output "network_peering" {
+#   value = local.ipsec_tunnels
+# }
+
 resource "scaleway_s2s_vpn_customer_gateway" "peer" {
-  for_each    = local.ipsec_tunnels
-  name        = each.key
+  for_each = local.ipsec_tunnels
+  name     = each.key
+  region   = local.region
+  tags     = var.tags
+
+  asn         = each.value.peer_asn
   ipv4_public = each.value.peer_v4
   ipv6_public = each.value.peer_v6
-  asn         = each.value.peer_asn
-  tags        = var.tags
 }
 
 resource "scaleway_s2s_vpn_connection" "peer" {
@@ -94,30 +103,60 @@ resource "scaleway_s2s_vpn_connection" "peer" {
   dynamic "bgp_config_ipv4" {
     for_each = each.value.peer_p2p_v4 != "" && each.value.server_p2p_v4 != "" ? [1] : []
     content {
-      private_ip        = "${each.value.server_p2p_v4}/31"
-      peer_private_ip   = "${each.value.peer_p2p_v4}/31"
+      private_ip        = "${each.value.server_p2p_v4}/30"
+      peer_private_ip   = "${each.value.peer_p2p_v4}/30"
       routing_policy_id = scaleway_s2s_vpn_routing_policy.peer_policy_v4[0].id
     }
   }
-  dynamic "bgp_config_ipv6" {
-    for_each = each.value.peer_p2p_v6 != "" && each.value.server_p2p_v6 != "" ? [1] : []
-    content {
-      # Bug?, using auto assigned ip for bgp session
-      #
-      # private_ip        = "${each.value.server_p2p_v6}/127"
-      # peer_private_ip   = "${each.value.peer_p2p_v6}/127"
-      routing_policy_id = scaleway_s2s_vpn_routing_policy.peer_policy_v6[0].id
-    }
-  }
+  # dynamic "bgp_config_ipv6" {
+  #   for_each = each.value.peer_p2p_v6 != "" && each.value.server_p2p_v6 != "" ? [1] : []
+  #   content {
+  #     # Bug?, using auto assigned ip for bgp session
+  #     #
+  #     private_ip        = "${each.value.server_p2p_v6}/127"
+  #     peer_private_ip   = "${each.value.peer_p2p_v6}/127"
+  #     routing_policy_id = scaleway_s2s_vpn_routing_policy.peer_policy_v6[0].id
+  #   }
+  # }
 
   ikev2_ciphers {
-    encryption = "aes256"
+    encryption = "aes256gcm"
     integrity  = "sha256"
-    dh_group   = "modp2048"
+    dh_group   = "ecp256"
   }
   esp_ciphers {
-    encryption = "aes256"
-    integrity  = "sha256"
-    dh_group   = "modp2048"
+    encryption = "aes256gcm"
+    integrity  = "none"
+    dh_group   = "none"
+  }
+  # ikev2_ciphers {
+  #   encryption = "aes256gcm"
+  #   integrity  = "sha256"
+  #   dh_group   = "modp2048"
+  # }
+  # esp_ciphers {
+  #   encryption = "aes256gcm"
+  #   integrity  = "sha256"
+  #   dh_group   = "none"
+  # }
+
+  # Legacy ciphers
+  #
+  # ikev2_ciphers {
+  #   encryption = "aes256"
+  #   integrity  = "sha256"
+  #   dh_group   = "modp2048"
+  # }
+  # esp_ciphers {
+  #   encryption = "aes256"
+  #   integrity  = "sha256"
+  #   dh_group   = "modp2048"
+  # }
+
+  lifecycle {
+    ignore_changes = [
+      # Bag: "none"
+      esp_ciphers,
+    ]
   }
 }
