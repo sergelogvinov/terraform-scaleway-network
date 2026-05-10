@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/sergelogvinov/terraform-scaleway-network/compare/v0.1.0...v0.2.0) (2026-05-10)
+
+
+### Features
+
+* add elastic-metal network ([c9aa638](https://github.com/sergelogvinov/terraform-scaleway-network/commit/c9aa638933c61de94b2077393b79d33f0fc171b9))
+* ipsec endpoint list ([36fca68](https://github.com/sergelogvinov/terraform-scaleway-network/commit/36fca68079cdbea735564f8ecd2335a4db596839))
+* ipsec peering ([642fc6d](https://github.com/sergelogvinov/terraform-scaleway-network/commit/642fc6d9483c41277596baeff09a99893e4dd7ce))
+
+
+### Bug Fixes
+
+* secgroup ([873c480](https://github.com/sergelogvinov/terraform-scaleway-network/commit/873c4800c98f792d05cf2b4bf4c05d252f6328f8))
+
 ## [0.1.0](https://github.com/sergelogvinov/terraform-scaleway-network/compare/v0.0.1...v0.1.0) (2026-03-27)
 
 
